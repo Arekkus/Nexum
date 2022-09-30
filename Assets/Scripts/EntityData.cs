@@ -1,17 +1,28 @@
 using System;
 
-public class EntityData {
+public struct LoginPacket {
+    String packet_type;
+    String username;
+    String color;
+}
 
-        public String action;
-        public String type;
-        public int entityId;
-        public float posX;
-        public float posY;
+public struct EntityCreatePacket {
+    String packet_type;
+    ulong entity_id;
+    String entity_model;
+    float x;
+    float y;
+    String additional_data;
+}
 
-        public EntityData() {
-            type = "nix";
-            entityId = -1;
-            posX = 0;
-            posY = 0;
-        }
-    }
+public struct EntityUpdatePacket {
+    String packet_type;
+    ulong entity_id;
+    float x;
+    float y;
+}
+
+public struct EntityDestroyPacket {
+    String packet_type;
+    ulong entity_id;
+}

@@ -5,17 +5,13 @@ using UnityEngine;
 
 public class Entity : MonoBehaviour { 
 
-    public String type;
-    public int entityId;
-    public float posX;
-    public float posY;
+    // [SerializeField] private string entityModel;
+    // [SerializeField] private int entityId;
 
-    // Start is called before the first frame update
     void Start() {
-
+        
     }
 
-    // Update is called once per frame
     void Update() {
         
     }

@@ -1,19 +1,17 @@
-using System;
-using System.IO;
-using System.Collections;
-using System.Collections.Generic;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using UnityEngine;
 
 public class TCP_Test : MonoBehaviour {
 
     private NetworkManager nm;
+    [SerializeField] private EntityManager em;
 
     private void Start() {
-        nm = new NetworkManager();
+        nm = new NetworkManager(em);
         nm.Start();
+    }
+
+    private void Update() {
+        nm.HandleMessages();
     }
 
     private void OnDestroy() {

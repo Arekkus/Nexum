@@ -1,4 +1,21 @@
 using System;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
+
+public struct DummyPacket{
+    public string packet_type;
+
+    [OnDeserialized]
+    private void OnDeserialized(StreamingContext context) {
+        //context.
+    }
+}
+
+public struct WorldUpdatePacket{
+    public string packet_type;
+    public string[] entities;
+}
 
 public struct LoginPacket {
     public string packet_type;

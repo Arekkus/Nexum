@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 
-public class Entity : MonoBehaviour
-{
-    public EntityData entityData = new EntityData();
+public class Entity : MonoBehaviour { 
 
     public String type;
     public int entityId;
@@ -13,14 +11,12 @@ public class Entity : MonoBehaviour
     public float posY;
 
     // Start is called before the first frame update
-    void Start()
-    {
+    void Start() {
 
     }
 
     // Update is called once per frame
-    void Update()
-    {
+    void Update() {
         
     }
 

@@ -1,28 +1,34 @@
 using System;
 
 public struct LoginPacket {
-    String packet_type;
-    String username;
-    String color;
+    public string packet_type;
+    public string username;
+    public string color;
+
+    public LoginPacket(string username, string color) {
+        this.packet_type = "login";
+        this.username = username;
+        this.color = color;
+    }
 }
 
 public struct EntityCreatePacket {
-    String packet_type;
-    ulong entity_id;
-    String entity_model;
-    float x;
-    float y;
-    String additional_data;
+    public string packet_type;
+    public ulong entity_id;
+    public string entity_model;
+    public float x;
+    public float y;
+    public string additional_data;
 }
 
 public struct EntityUpdatePacket {
-    String packet_type;
-    ulong entity_id;
-    float x;
-    float y;
+    public string packet_type;
+    public ulong entity_id;
+    public float x;
+    public float y;
 }
 
 public struct EntityDestroyPacket {
-    String packet_type;
-    ulong entity_id;
+    public String packet_type;
+    public ulong entity_id;
 }

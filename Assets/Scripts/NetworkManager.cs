@@ -12,6 +12,8 @@ public class NetworkManager {
 
     private TcpClient client;
     private Thread clientThread;
+    private bool clientRun;
+
     private EntityManager manager;
     private Queue<string> messageInBuffer;
     private Queue<string> messageOutBuffer;
@@ -29,8 +31,7 @@ public class NetworkManager {
     }
 
     public void Stop() {
-        client.Close();
-        clientThread.Abort();
+        clientRun = false;
     }
 
     public void Send(string message) {
@@ -56,20 +57,20 @@ public class NetworkManager {
 
         var data = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(new LoginPacket("Bobb", "#ff0000")));
         socket.Write(data, 0, data.Length);
-        while (true) {
-            if(socket.CanRead) {
+        clientRun = true;
+        while (clientRun) {
+            if(socket.DataAvailable) {
                 int bytesRead = socket.Read(buffer, 0, buffer.Length);
                 string message = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                Debug.Log("Received " + bytesRead + "bytes.\nMessage: " + message);
+                // Debug.Log("Received " + bytesRead + "bytes.\nMessage: " + message);
                 messageInBuffer.Enqueue(message);
             }
 
-            if (socket.CanWrite) {
-                while(messageOutBuffer.Count > 0) {
-                    socket.Write(System.Text.Encoding.UTF8.GetBytes(messageOutBuffer.Dequeue()));
-                }
+            while (messageOutBuffer.Count > 0) {
+                socket.Write(System.Text.Encoding.UTF8.GetBytes(messageOutBuffer.Dequeue()));
             }
         }
+        client.Close();
     }
 
     private void handleMessage(string message) {

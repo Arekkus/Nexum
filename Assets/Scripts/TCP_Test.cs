@@ -2,10 +2,11 @@ using UnityEngine;
 
 public class TCP_Test : MonoBehaviour {
 
-    private NetworkManager nm;
+    public static NetworkManager nm { get; private set; }
+
     [SerializeField] private EntityManager em;
 
-    private void Start() {
+    private void Awake() {
         nm = new NetworkManager(em);
         nm.Start();
     }

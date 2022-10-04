@@ -1,20 +1,21 @@
+using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-using Newtonsoft.Json;
+using UnityEngine;
 
-public struct DummyPacket{
+public struct DummyPacket {
     public string packet_type;
-
-    [OnDeserialized]
-    private void OnDeserialized(StreamingContext context) {
-        //context.
-    }
 }
 
 public struct WorldUpdatePacket{
     public string packet_type;
-    public string[] entities;
+    public ulong your_entity_id;
+    public JArray entities;
+}
+
+public struct PlayerUpdatePacket {
+    public string packet_type;
+    public float x;
+    public float y;
 }
 
 public struct LoginPacket {

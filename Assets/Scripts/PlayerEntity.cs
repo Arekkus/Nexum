@@ -1,7 +1,5 @@
-using System;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
+using Newtonsoft.Json;
 
 public class PlayerEntity : MonoBehaviour {
 
@@ -12,10 +10,15 @@ public class PlayerEntity : MonoBehaviour {
     }
 
     void Update() {
-        Move();
+        move();
+        TCP_Test.nm.Send(JsonConvert.SerializeObject(new PlayerUpdatePacket {
+            packet_type = "update",
+            x = transform.position.x,
+            y = transform.position.y
+        }));
     }
 
-    void Move() { 
+    private void move() { 
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
 

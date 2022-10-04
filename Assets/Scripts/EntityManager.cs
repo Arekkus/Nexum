@@ -32,7 +32,8 @@ public class EntityManager : MonoBehaviour {
         }
 
         var entity = Instantiate(prefab, Vector3.zero, Quaternion.identity);
-        entities[entityId] = entity.GetComponent<Entity>();
+        if (entityId != TCP_Test.nm.myEntityId) DestroyImmediate(entity.GetComponent<PlayerEntity>());
+        entities.Add(entityId, entity.GetComponent<Entity>());
     }
 
     public void DestroyEntity(ulong entityId) {
@@ -52,7 +53,7 @@ public class EntityManager : MonoBehaviour {
             Debug.Log("Could not find Entity");
             return;
         }
-        entity.transform.position = pos;
+        if(entityId != TCP_Test.nm.myEntityId) entity.transform.position = pos;
     }
 
 }

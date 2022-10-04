@@ -3,20 +3,24 @@ using System.Threading;
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 public class NetworkManager {
 
-    private static string SERVER_IP = "localhost";
+    private static string SERVER_IP = "192.168.1.250";
     private static ushort SERVER_PORT = 3999;
 
     private TcpClient client;
     private Thread clientThread;
     private EntityManager manager;
-    private Queue<string> messageBuffer;
-    
+    private Queue<string> messageInBuffer;
+    private Queue<string> messageOutBuffer;
+    public ulong myEntityId { get; private set; }
+
     public NetworkManager(EntityManager manager) {
         this.manager = manager;
-        messageBuffer = new Queue<string>();
+        messageInBuffer = new Queue<string>();
+        messageOutBuffer = new Queue<string>();
     }
 
     public void Start() {
@@ -29,9 +33,13 @@ public class NetworkManager {
         clientThread.Abort();
     }
 
-    public void HandleMessages(){
-        while(messageBuffer.Count > 0) {
-            string hmm = messageBuffer.Dequeue();
+    public void Send(string message) {
+        messageOutBuffer.Enqueue(message);
+    }
+
+    public void HandleMessages() {
+        while(messageInBuffer.Count > 0) {
+            string hmm = messageInBuffer.Dequeue();
             handleMessage(hmm);
         }
         
@@ -49,10 +57,18 @@ public class NetworkManager {
         var data = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(new LoginPacket("Bobb", "#ff0000")));
         socket.Write(data, 0, data.Length);
         while (true) {
-            int bytesRead = socket.Read(buffer, 0, buffer.Length);
-            string message = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
-            Debug.Log("Received " + bytesRead + "bytes.\nMessage: " + message);    
-            messageBuffer.Enqueue(message);
+            if(socket.CanRead) {
+                int bytesRead = socket.Read(buffer, 0, buffer.Length);
+                string message = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                Debug.Log("Received " + bytesRead + "bytes.\nMessage: " + message);
+                messageInBuffer.Enqueue(message);
+            }
+
+            if (socket.CanWrite) {
+                while(messageOutBuffer.Count > 0) {
+                    socket.Write(System.Text.Encoding.UTF8.GetBytes(messageOutBuffer.Dequeue()));
+                }
+            }
         }
     }
 
@@ -60,18 +76,26 @@ public class NetworkManager {
         message = message.Split("\n")[0];
         DummyPacket packet = JsonConvert.DeserializeObject<DummyPacket>(message);
 
-        if(packet.packet_type == "world" || packet.packet_type == "welcome") {
+        if (packet.packet_type == "world") {
             handleWorldUpdate(JsonConvert.DeserializeObject<WorldUpdatePacket>(message));
-        } else if(packet.packet_type == "entity_create") {
+        } else if (packet.packet_type == "entity_create") {
             handleEntityCreate(JsonConvert.DeserializeObject<EntityCreatePacket>(message));
-        } else if(packet.packet_type == "entity_update") {
+        } else if (packet.packet_type == "entity_update") {
             handleEntityUpdate(JsonConvert.DeserializeObject<EntityUpdatePacket>(message));
-        } else if(packet.packet_type == "entity_destroy") {
+        } else if (packet.packet_type == "entity_destroy") {
             handleEntityDestroy(JsonConvert.DeserializeObject<EntityDestroyPacket>(message));
+        } else if (packet.packet_type == "welcome") {
+            handleWelcome(JsonConvert.DeserializeObject<WorldUpdatePacket>(message));
         } else {
             Debug.Log("Unknown packet type");
             Stop();
         }
+    }
+
+    private void handleWelcome(WorldUpdatePacket packet) {
+        Debug.Log("Got EntityID");
+        myEntityId = packet.your_entity_id;
+        handleWorldUpdate(packet);
     }
 
     private void handleEntityDestroy(EntityDestroyPacket packet) {
@@ -92,15 +116,14 @@ public class NetworkManager {
             return;
         }
 
-        Debug.Log("Number Entities " + update.entities.Length);
-
-        foreach(string original in update.entities) {
+        foreach(var token in update.entities) {
+            string original = token.ToString();
             var packet = JsonConvert.DeserializeObject<DummyPacket>(original);
-            if(packet.packet_type == "entity_create") {
+            if (packet.packet_type == "entity_create") {
                 handleEntityCreate(JsonConvert.DeserializeObject<EntityCreatePacket>(original));
-            } else if(packet.packet_type == "entity_update") {
+            } else if (packet.packet_type == "entity_update") {
                 handleEntityUpdate(JsonConvert.DeserializeObject<EntityUpdatePacket>(original));
-            } else if(packet.packet_type == "entity_destroy") {
+            } else if (packet.packet_type == "entity_destroy") {
                 handleEntityDestroy(JsonConvert.DeserializeObject<EntityDestroyPacket>(original));
             } else {
                 Debug.Log("Unknown packet type");

@@ -8,12 +8,13 @@ public struct DummyPacket {
 
 public struct WorldUpdatePacket{
     public string packet_type;
-    public ulong your_entity_id;
-    public JArray entities;
+    public ulong player_entity_id;
+    public ulong tick;
 }
 
 public struct PlayerUpdatePacket {
     public string packet_type;
+    public ulong tick;
     public float x;
     public float y;
 }
@@ -36,7 +37,7 @@ public struct EntityCreatePacket {
     public string entity_model;
     public float x;
     public float y;
-    public string additional_data;
+    public JObject additional_data;
 }
 
 public struct EntityUpdatePacket {

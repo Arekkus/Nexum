@@ -6,16 +6,19 @@ public class TCP_Test : MonoBehaviour {
 
     [SerializeField] private EntityManager em;
 
-    private void Awake() {
+    void Awake() {
         nm = new NetworkManager(em);
         nm.Start();
     }
 
-    private void Update() {
+    void Update() {
         nm.HandleMessages();
     }
 
-    private void OnDestroy() {
+    void FixedUpdate() {
+    }
+
+    void OnDestroy() {
         nm.Stop();
     }
 

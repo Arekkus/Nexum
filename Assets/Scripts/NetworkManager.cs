@@ -3,12 +3,11 @@ using System.Threading;
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 public class NetworkManager {
 
-    private static string SERVER_IP = "192.168.1.250";
-    private static ushort SERVER_PORT = 3999;
+    private static string SERVER_IP = "localhost";
+    private static ushort SERVER_PORT = 3399;
 
     private TcpClient client;
     private Thread clientThread;
@@ -17,7 +16,11 @@ public class NetworkManager {
     private EntityManager manager;
     private Queue<string> messageInBuffer;
     private Queue<string> messageOutBuffer;
+
     public ulong myEntityId { get; private set; }
+    public ulong startTick { get; private set; }
+    public float startTime { get; private set; }
+    public float tickRate = 1 / 20.0f;
 
     public NetworkManager(EntityManager manager) {
         this.manager = manager;
@@ -35,7 +38,7 @@ public class NetworkManager {
     }
 
     public void Send(string message) {
-        messageOutBuffer.Enqueue(message);
+        messageOutBuffer.Enqueue(message + "\n");
     }
 
     public void HandleMessages() {
@@ -62,7 +65,7 @@ public class NetworkManager {
             if(socket.DataAvailable) {
                 int bytesRead = socket.Read(buffer, 0, buffer.Length);
                 string message = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                // Debug.Log("Received " + bytesRead + "bytes.\nMessage: " + message);
+                //Debug.Log("Received " + bytesRead + "bytes.\nMessage: " + message);
                 messageInBuffer.Enqueue(message);
             }
 
@@ -74,29 +77,31 @@ public class NetworkManager {
     }
 
     private void handleMessage(string message) {
-        message = message.Split("\n")[0];
-        DummyPacket packet = JsonConvert.DeserializeObject<DummyPacket>(message);
+        foreach(string line in message.Split("\n")) {
+            if (line.Length <= 0) continue;
+            //Debug.Log("Handling Message: " + line);
+            DummyPacket packet = JsonConvert.DeserializeObject<DummyPacket>(line);
 
-        if (packet.packet_type == "world") {
-            handleWorldUpdate(JsonConvert.DeserializeObject<WorldUpdatePacket>(message));
-        } else if (packet.packet_type == "entity_create") {
-            handleEntityCreate(JsonConvert.DeserializeObject<EntityCreatePacket>(message));
-        } else if (packet.packet_type == "entity_update") {
-            handleEntityUpdate(JsonConvert.DeserializeObject<EntityUpdatePacket>(message));
-        } else if (packet.packet_type == "entity_destroy") {
-            handleEntityDestroy(JsonConvert.DeserializeObject<EntityDestroyPacket>(message));
-        } else if (packet.packet_type == "welcome") {
-            handleWelcome(JsonConvert.DeserializeObject<WorldUpdatePacket>(message));
-        } else {
-            Debug.Log("Unknown packet type");
-            Stop();
+            if (packet.packet_type == "welcome") {
+                handleWelcome(JsonConvert.DeserializeObject<WorldUpdatePacket>(line));
+            } else if (packet.packet_type == "entity_create") {
+                handleEntityCreate(JsonConvert.DeserializeObject<EntityCreatePacket>(line));
+            } else if (packet.packet_type == "entity_update") {
+                handleEntityUpdate(JsonConvert.DeserializeObject<EntityUpdatePacket>(line));
+            } else if (packet.packet_type == "entity_destroy") {
+                handleEntityDestroy(JsonConvert.DeserializeObject<EntityDestroyPacket>(line));
+            }  else {
+                Debug.Log("Unknown packet type");
+                Stop();
+            }
         }
     }
 
     private void handleWelcome(WorldUpdatePacket packet) {
         Debug.Log("Got EntityID");
-        myEntityId = packet.your_entity_id;
-        handleWorldUpdate(packet);
+        myEntityId = packet.player_entity_id;
+        startTick = packet.tick;
+        startTime = Time.unscaledTime - 0.25f;
     }
 
     private void handleEntityDestroy(EntityDestroyPacket packet) {
@@ -109,28 +114,6 @@ public class NetworkManager {
 
     private void handleEntityCreate(EntityCreatePacket packet) {
         manager.SpawnEntity(packet.entity_id, packet.entity_model, Vector2.zero);
-    }
-
-    private void handleWorldUpdate(WorldUpdatePacket update) {
-        if(update.entities == null) {
-            Debug.Log("No Entities");
-            return;
-        }
-
-        foreach(var token in update.entities) {
-            string original = token.ToString();
-            var packet = JsonConvert.DeserializeObject<DummyPacket>(original);
-            if (packet.packet_type == "entity_create") {
-                handleEntityCreate(JsonConvert.DeserializeObject<EntityCreatePacket>(original));
-            } else if (packet.packet_type == "entity_update") {
-                handleEntityUpdate(JsonConvert.DeserializeObject<EntityUpdatePacket>(original));
-            } else if (packet.packet_type == "entity_destroy") {
-                handleEntityDestroy(JsonConvert.DeserializeObject<EntityDestroyPacket>(original));
-            } else {
-                Debug.Log("Unknown packet type");
-                Stop();
-            }
-        }
     }
 
 

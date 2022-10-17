@@ -48,6 +48,10 @@ public class EntityManager : MonoBehaviour {
 
     public void UpdateEntity(ulong entityId, Vector2 pos) {
         //Debug.Log("Updating Entity with ID: " + entityId + " and " + pos);
+        if(!entities.ContainsKey(entityId)) {
+            Debug.Log("Unknown Entity ID");
+            return;
+        }
         var entity = entities[entityId];
         if(entity == null) {
             Debug.Log("Could not find Entity");
